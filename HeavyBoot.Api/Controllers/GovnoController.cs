@@ -26,9 +26,9 @@ namespace HeavyBoot.Api.Controllers
         }
 
         [HttpGet("{pcname}", Name = "GetPcname")]
-        public IActionResult GetByPcname(string pcname)
+        public async Task<IActionResult> GetByPcname(string pcname)
         {
-            var result = connectionDb.HbDataTables.First(x => x.Pcname == pcname);
+            var result = await connectionDb.HbDataTables.FirstAsync(x => x.Pcname == pcname);
             if (result == null)
             {
                 return NotFound();
@@ -37,14 +37,14 @@ namespace HeavyBoot.Api.Controllers
         }
 
         [HttpPut("{pcname}")] //put
-        public IActionResult Update(string pcname, [FromBody] HBDataTable table)
+        public async Task<IActionResult> Update(string pcname, [FromBody] HBDataTable table)
         {
             if (table == null /*|| table.Pcname != pcname*/)
             {
                 return BadRequest();
             }
 
-            var result = connectionDb.HbDataTables.FirstOrDefault(x => x.Pcname == pcname);
+            var result = await connectionDb.HbDataTables.FirstOrDefaultAsync(x => x.Pcname == pcname);
             if (result == null)
             {
                 return NotFound();
@@ -64,14 +64,14 @@ namespace HeavyBoot.Api.Controllers
         }
 
         [HttpPost]
-        public IActionResult Create([FromBody] HBDataTable table)
+        public async Task<IActionResult> Create([FromBody] HBDataTable table)
         {
             if (table == null)
             {
                 return BadRequest();
             }
             connectionDb.HbDataTables.Add(table);
-            connectionDb.SaveChanges();
+            await connectionDb.SaveChangesAsync();
 
             return CreatedAtRoute(new { pcname = table.Pcname }, table);
         }
