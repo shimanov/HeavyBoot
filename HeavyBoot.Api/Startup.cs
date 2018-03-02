@@ -19,8 +19,11 @@ namespace HeavyBoot.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            string conn = "Server=r54web03.main.russianpost.ru; Database=HeavyBoot;user id=sa;password=qwep[]ghjB1";
+            //TODO: Указать параметры подключения
+            const string conn = "Server=; Database=;user id=;password=";
             services.AddDbContext<ConnectionToDb>(o => o.UseSqlServer(conn));
+            //Сжатие ответа
+            services.AddResponseCompression();
             services.AddMvc();
         }
 
@@ -31,7 +34,8 @@ namespace HeavyBoot.Api
             {
                 app.UseDeveloperExceptionPage();
             }
-
+            //Сжатие ответа
+            app.UseResponseCompression();
             app.UseMvc();
         }
     }
