@@ -1,8 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 using HeavyBoot.Api.Model;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace HeavyBoot.Api.Controllers
@@ -12,23 +15,25 @@ namespace HeavyBoot.Api.Controllers
     [ResponseCache(Location = ResponseCacheLocation.Any, Duration = 300)]
     public class GovnoController : Controller
     {
-        ConnectionToDb connectionDb;
+        private readonly ConnectionToDb _connectionDb;
+        private readonly IHostingEnvironment _environment;
 
-        public GovnoController(ConnectionToDb connection)
+        public GovnoController(ConnectionToDb connection, IHostingEnvironment environment)
         {
-            connectionDb = connection;
+            _connectionDb = connection;
+            _environment = environment;
         }
 
         [HttpGet]
         public IEnumerable<HBDataTable> Get()
         {
-            return connectionDb.HbDataTables.ToList();
+            return _connectionDb.HbDataTables.ToList();
         }
 
         [HttpGet("{pcname}", Name = "GetPcname")]
         public async Task<IActionResult> GetByPcname(string pcname)
         {
-            var result = await connectionDb.HbDataTables.FirstAsync(x => x.Pcname == pcname);
+            var result = await _connectionDb.HbDataTables.FirstAsync(x => x.Pcname == pcname);
             if (result == null)
             {
                 return NotFound();
@@ -44,7 +49,7 @@ namespace HeavyBoot.Api.Controllers
                 return BadRequest();
             }
 
-            var result = await connectionDb.HbDataTables.FirstOrDefaultAsync(x => x.Pcname == pcname);
+            var result = await _connectionDb.HbDataTables.FirstOrDefaultAsync(x => x.Pcname == pcname);
             if (result == null)
             {
                 return NotFound();
@@ -57,8 +62,8 @@ namespace HeavyBoot.Api.Controllers
             result.TimeOut = table.TimeOut;
             result.IsChecked = table.IsChecked;
 
-            connectionDb.HbDataTables.Update(result);
-            connectionDb.SaveChanges();
+            _connectionDb.HbDataTables.Update(result);
+            _connectionDb.SaveChanges();
 
             return new NoContentResult();
         }
@@ -70,10 +75,24 @@ namespace HeavyBoot.Api.Controllers
             {
                 return BadRequest();
             }
-            connectionDb.HbDataTables.Add(table);
-            await connectionDb.SaveChangesAsync();
+            _connectionDb.HbDataTables.Add(table);
+            await _connectionDb.SaveChangesAsync();
 
             return CreatedAtRoute(new { pcname = table.Pcname }, table);
+        }
+
+        [HttpPost]
+        public async Task<IActionResult> Upload(IFormFile file)
+        {
+            if (file != null)
+            {
+                string path = $"//Files//{file.FileName}";
+                using (var fileStream = new FileStream(_environment.WebRootPath + path, FileMode.Create))
+                {
+                    await file.CopyToAsync(fileStream);
+                }
+            }
+            return NoContent();
         }
     }
 }
